@@ -7,8 +7,17 @@ export default {
 
 		await Statsig.initialize(env.STATSIG_SECRET_KEY);
 
-		const assignments = Statsig.getClientInitializeResponse({ userID },'', { hash: 'none'});
+		const assignmentsRaw = Statsig.getClientInitializeResponse({ userID },'', { hash: 'none'});
 
-		return new Response(JSON.stringify(assignments?.feature_gates));
+		const passingAssignments = Object.values(assignmentsRaw?.feature_gates)
+			.filter(({ value }) => value)
+			.map(({ name }) => name);
+
+		const cacheKey = passingAssignments.join('-');
+
+		return new Response(JSON.stringify({
+			passingAssignments,
+			cacheKey
+		}));
 	},
 } satisfies ExportedHandler<Env>;
